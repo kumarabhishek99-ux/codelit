@@ -1,11 +1,3 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  experimental: {
-    mdxRs: true,
-  },
-  turbopack: {
-    root: import.meta.dirname,
-  },
-}
-
+const nextConfig = {}
 export default nextConfig
