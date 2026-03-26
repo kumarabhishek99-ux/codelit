@@ -29,7 +29,6 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Protected routes — redirect to login if not authenticated
   const protectedRoutes = ['/dashboard', '/learn', '/badges']
   const isProtected = protectedRoutes.some(r => pathname.startsWith(r))
 
@@ -37,7 +36,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Auth routes — redirect to dashboard if already logged in
   const authRoutes = ['/login', '/signup']
   const isAuth = authRoutes.some(r => pathname.startsWith(r))
 
