@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 interface Props {
   lesson: any
   userId: string
+  isRevision?: boolean
   onBack: () => void
   onComplete: (score: number) => void
   completing: boolean
@@ -95,14 +96,14 @@ const fallbackQuiz: Question[] = [
   },
 ]
 
-export default function LessonQuiz({ lesson, userId, onBack, onComplete, completing }: Props) {
+export default function LessonQuiz({ lesson, userId, isRevision, onBack, onComplete, completing }: Props) {
   const questions = lessonQuizzes[lesson.slug] ?? fallbackQuiz
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [revealed, setRevealed] = useState<Record<string, boolean>>({})
   const [wrongAttempts, setWrongAttempts] = useState<Record<string, number>>({})
 
   const handleAnswer = (qId: string, value: string, correct: string) => {
-    if (revealed[qId] && answers[qId] === correct) return // already correct
+    if (revealed[qId] && answers[qId] === correct) return
 
     setAnswers(prev => ({ ...prev, [qId]: value }))
 
@@ -115,7 +116,6 @@ export default function LessonQuiz({ lesson, userId, onBack, onComplete, complet
 
   const allCorrect = questions.every(q => answers[q.id] === q.correct)
 
-  // Unlock q2 only after q1 is correct
   const isUnlocked = (index: number) => {
     if (index === 0) return true
     return questions.slice(0, index).every(q => answers[q.id] === q.correct)
@@ -123,15 +123,16 @@ export default function LessonQuiz({ lesson, userId, onBack, onComplete, complet
 
   const handleSubmit = async () => {
     const scorePct = 100
-    // Save quiz attempt
-    const supabase = createClient()
-    await supabase.from('quiz_attempts').insert({
-      user_id: userId,
-      lesson_id: lesson.id,
-      answers,
-      score_pct: scorePct,
-      passed: true,
-    })
+    if (!isRevision) {
+      const supabase = createClient()
+      await supabase.from('quiz_attempts').insert({
+        user_id: userId,
+        lesson_id: lesson.id,
+        answers,
+        score_pct: scorePct,
+        passed: true,
+      })
+    }
     onComplete(scorePct)
   }
 
@@ -139,11 +140,17 @@ export default function LessonQuiz({ lesson, userId, onBack, onComplete, complet
     <div>
       {/* Tag */}
       <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 text-xs font-medium px-3 py-1.5 rounded-full border border-amber-100 mb-4">
-        <span>★</span> Quick quiz · {questions.length} questions
+        <span>★</span> {isRevision ? 'Practice quiz' : `Quick quiz · ${questions.length} questions`}
       </div>
 
-      <h2 className="text-xl font-medium text-gray-900 mb-2">Check your understanding</h2>
-      <p className="text-sm text-gray-500 mb-8">Get all questions right to complete this lesson.</p>
+      <h2 className="text-xl font-medium text-gray-900 mb-2">
+        {isRevision ? 'Practice quiz' : 'Check your understanding'}
+      </h2>
+      <p className="text-sm text-gray-500 mb-8">
+        {isRevision
+          ? 'This is just for practice — no badges will change.'
+          : 'Get all questions right to complete this lesson.'}
+      </p>
 
       <div className="flex flex-col gap-8 mb-8">
         {questions.map((q, i) => {
@@ -190,7 +197,6 @@ export default function LessonQuiz({ lesson, userId, onBack, onComplete, complet
                 })}
               </div>
 
-              {/* Feedback */}
               {isCorrect && revealed[q.id] && (
                 <div className="mt-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-800">
                   {q.feedbackOnCorrect}
@@ -206,7 +212,6 @@ export default function LessonQuiz({ lesson, userId, onBack, onComplete, complet
         })}
       </div>
 
-      {/* Nav */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <button onClick={onBack} className="text-sm text-gray-400 hover:text-gray-600">← Try it again</button>
         <button
@@ -214,7 +219,7 @@ export default function LessonQuiz({ lesson, userId, onBack, onComplete, complet
           disabled={!allCorrect || completing}
           className="bg-gray-900 text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-gray-700 transition-colors disabled:opacity-30"
         >
-          {completing ? 'Saving...' : 'Complete lesson →'}
+          {completing ? 'Saving...' : isRevision ? 'Finish revision →' : 'Complete lesson →'}
         </button>
       </div>
     </div>

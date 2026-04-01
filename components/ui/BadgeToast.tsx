@@ -53,7 +53,7 @@ export default function BadgeToast({ userId, initialBadges }: Props) {
     if (initialBadges && initialBadges.length > 0) {
       setQueue(prev => [...prev, ...initialBadges])
     }
-  }, [initialBadges])
+  }, [initialBadges?.length])
 
   // Realtime subscription
   useEffect(() => {

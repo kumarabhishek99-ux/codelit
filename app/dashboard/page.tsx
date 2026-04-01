@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -145,20 +146,18 @@ export default async function DashboardPage() {
                 const lessons = (mod.lessons ?? []).sort((a: any, b: any) => a.order_num - b.order_num)
                 const completedLessons = lessons.filter((l: any) => progressMap.get(l.id) === 'completed').length
                 const totalLessons = lessons.length
-                const isStarted = completedLessons > 0
                 const isComplete = completedLessons === totalLessons && totalLessons > 0
                 const pct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
                 const isActive = lessons.some((l: any) => progressMap.get(l.id) === 'in_progress')
 
-                return (
-                  <div
-                    key={mod.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${
-                      isActive
-                        ? 'border-blue-200 bg-blue-50'
-                        : 'border-gray-100 bg-white'
-                    }`}
-                  >
+                // Link to first in_progress, then first not_started, then first lesson (revision)
+                const targetLesson =
+                  lessons.find((l: any) => progressMap.get(l.id) === 'in_progress') ??
+                  lessons.find((l: any) => !progressMap.get(l.id)) ??
+                  lessons[0]
+
+                const cardContent = (
+                  <>
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium flex-shrink-0 ${
                       isComplete ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                     }`}>
@@ -174,11 +173,31 @@ export default async function DashboardPage() {
                           />
                         </div>
                         <span className="text-xs text-gray-400 whitespace-nowrap">
-                          {completedLessons}/{totalLessons}
+                          {isComplete ? '↻ Revisit' : `${completedLessons}/${totalLessons}`}
                         </span>
                       </div>
                     </div>
-                  </div>
+                  </>
+                )
+
+                const className = `flex items-center gap-3 p-3 rounded-xl border text-sm transition-colors ${
+                  isActive
+                    ? 'border-blue-200 bg-blue-50 hover:border-blue-300'
+                    : isComplete
+                    ? 'border-teal-100 bg-white hover:border-teal-300'
+                    : 'border-gray-100 bg-white hover:border-gray-200'
+                }`
+
+                return targetLesson ? (
+                  <Link
+                    key={mod.id}
+                    href={`/learn/${mod.slug}/${targetLesson.slug}`}
+                    className={className}
+                  >
+                    {cardContent}
+                  </Link>
+                ) : (
+                  <div key={mod.id} className={className}>{cardContent}</div>
                 )
               })}
             </div>

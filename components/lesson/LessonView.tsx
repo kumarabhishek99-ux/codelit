@@ -8,6 +8,7 @@ import LessonRead from './LessonRead'
 import LessonTryIt from './LessonTryIt'
 import LessonQuiz from './LessonQuiz'
 import LessonComplete from './LessonComplete'
+import LessonRevisionComplete from './LessonRevisionComplete'
 import BadgeToast from '@/components/ui/BadgeToast'
 
 interface Props {
@@ -28,9 +29,8 @@ export default function LessonView({
   userId,
 }: Props) {
   const router = useRouter()
-  const [phase, setPhase] = useState<'read' | 'tryit' | 'quiz' | 'complete'>(
-    initialProgress?.status === 'completed' ? 'complete' : 'read'
-  )
+  const isRevision = initialProgress?.status === 'completed'
+  const [phase, setPhase] = useState<'read' | 'tryit' | 'quiz' | 'complete' | 'revision_complete'>('read')
   const [completing, setCompleting] = useState(false)
   const [newlyEarnedBadges, setNewlyEarnedBadges] = useState<any[]>([])
 
@@ -41,14 +41,14 @@ export default function LessonView({
   const phasePills = [
     { key: 'read', label: 'Read' },
     { key: 'tryit', label: 'Try it' },
-    { key: 'quiz', label: 'Quiz' },
+    { key: 'quiz', label: isRevision ? 'Practice' : 'Quiz' },
   ]
 
-  const phaseIndex = { read: 0, tryit: 1, quiz: 2, complete: 3 }
+  const phaseIndex = { read: 0, tryit: 1, quiz: 2, complete: 3, revision_complete: 3 }
 
-  // Mark lesson as in_progress on mount
+  // Mark lesson as in_progress on mount (only for first-time)
   useEffect(() => {
-    if (initialProgress?.status !== 'completed') {
+    if (!isRevision) {
       const supabase = createClient()
       supabase.from('user_progress').upsert({
         user_id: userId,
@@ -63,6 +63,50 @@ export default function LessonView({
     setCompleting(true)
     const supabase = createClient()
 
+    if (isRevision) {
+      // Increment revision_count on progress row
+      await supabase.from('user_progress').update({
+        revision_count: (initialProgress?.revision_count ?? 0) + 1,
+      }).eq('user_id', userId).eq('lesson_id', lesson.id)
+
+      // Increment revision_count on profile and check badge thresholds
+      const { data: profile } = await supabase
+        .from('profiles').select('revision_count').eq('id', userId).single()
+      const newCount = (profile?.revision_count ?? 0) + 1
+      await supabase.from('profiles').update({ revision_count: newCount }).eq('id', userId)
+
+      const revisionBadgeSlugs: string[] = []
+      if (newCount === 3) revisionBadgeSlugs.push('reviser')
+      if (newCount === 5) revisionBadgeSlugs.push('deep-learner')
+
+      for (const slug of revisionBadgeSlugs) {
+        const { data: badge } = await supabase
+          .from('badge_definitions').select('id').eq('slug', slug).single()
+        if (badge) {
+          await supabase.from('user_badges')
+            .upsert({ user_id: userId, badge_id: badge.id }, { onConflict: 'user_id,badge_id' })
+        }
+      }
+
+      // Poll for newly awarded badges
+      setTimeout(async () => {
+        const { data: newBadges } = await supabase
+          .from('user_badges')
+          .select('badge_id, earned_at, badge_definitions(*)')
+          .eq('user_id', userId)
+          .gte('earned_at', new Date(Date.now() - 5000).toISOString())
+          .order('earned_at', { ascending: false })
+        if (newBadges && newBadges.length > 0) {
+          setNewlyEarnedBadges(newBadges.map((b: any) => b.badge_definitions))
+        }
+      }, 1000)
+
+      setCompleting(false)
+      setPhase('revision_complete')
+      return
+    }
+
+    // First-time completion
     await supabase.from('user_progress').upsert({
       user_id: userId,
       lesson_id: lesson.id,
@@ -71,25 +115,21 @@ export default function LessonView({
       completed_at: new Date().toISOString(),
     }, { onConflict: 'user_id,lesson_id' })
 
-    // Update last_active_date for streak
-    await supabase
-      .from('profiles')
+    await supabase.from('profiles')
       .update({ last_active_date: new Date().toISOString().split('T')[0] })
       .eq('id', userId)
 
     setCompleting(false)
     setPhase('complete')
 
-    // Poll for new badges (fallback for Realtime)
+    // Poll for badges (fallback for Realtime)
     setTimeout(async () => {
-      const supabase = createClient()
       const { data: newBadges } = await supabase
         .from('user_badges')
         .select('badge_id, earned_at, badge_definitions(*)')
         .eq('user_id', userId)
         .gte('earned_at', new Date(Date.now() - 5000).toISOString())
         .order('earned_at', { ascending: false })
-
       if (newBadges && newBadges.length > 0) {
         setNewlyEarnedBadges(newBadges.map((b: any) => b.badge_definitions))
       }
@@ -111,6 +151,9 @@ export default function LessonView({
             <span className="text-gray-900 font-medium truncate max-w-32">{lesson.title}</span>
           </div>
           <div className="flex items-center gap-2">
+            {isRevision && (
+              <span className="text-xs font-medium text-teal-600 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">Revision</span>
+            )}
             <div className="text-xs text-gray-400">
               {lessonIndex + 1} of {totalLessons}
             </div>
@@ -127,7 +170,7 @@ export default function LessonView({
       <div className="max-w-2xl mx-auto px-6 py-8">
 
         {/* Phase pills */}
-        {phase !== 'complete' && (
+        {phase !== 'complete' && phase !== 'revision_complete' && (
           <div className="flex gap-2 mb-8">
             {phasePills.map((p, i) => (
               <div
@@ -148,25 +191,18 @@ export default function LessonView({
 
         {/* Phase content */}
         {phase === 'read' && (
-          <LessonRead
-            lesson={lesson}
-            module={mod}
-            onNext={() => setPhase('tryit')}
-          />
+          <LessonRead lesson={lesson} module={mod} onNext={() => setPhase('tryit')} />
         )}
 
         {phase === 'tryit' && (
-          <LessonTryIt
-            lesson={lesson}
-            onBack={() => setPhase('read')}
-            onNext={() => setPhase('quiz')}
-          />
+          <LessonTryIt lesson={lesson} onBack={() => setPhase('read')} onNext={() => setPhase('quiz')} />
         )}
 
         {phase === 'quiz' && (
           <LessonQuiz
             lesson={lesson}
             userId={userId}
+            isRevision={isRevision}
             onBack={() => setPhase('tryit')}
             onComplete={handleComplete}
             completing={completing}
@@ -174,11 +210,11 @@ export default function LessonView({
         )}
 
         {phase === 'complete' && (
-          <LessonComplete
-            lesson={lesson}
-            module={mod}
-            nextLesson={nextLesson}
-          />
+          <LessonComplete lesson={lesson} module={mod} nextLesson={nextLesson} />
+        )}
+
+        {phase === 'revision_complete' && (
+          <LessonRevisionComplete lesson={lesson} module={mod} nextLesson={nextLesson} />
         )}
 
       </div>
