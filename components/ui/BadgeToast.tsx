@@ -13,6 +13,7 @@ interface Badge {
 
 interface Props {
   userId: string
+  initialBadges?: Badge[]
 }
 
 const colorMap: Record<string, { bg: string; border: string; text: string }> = {
@@ -42,11 +43,19 @@ function BadgeIcon({ shape, color }: { shape: string; color: string }) {
   )
 }
 
-export default function BadgeToast({ userId }: Props) {
-  const [queue, setQueue] = useState<Badge[]>([])
+export default function BadgeToast({ userId, initialBadges }: Props) {
+  const [queue, setQueue] = useState<Badge[]>(initialBadges ?? [])
   const [visible, setVisible] = useState<Badge | null>(null)
   const [animating, setAnimating] = useState(false)
 
+  // Add initialBadges to queue when they arrive
+  useEffect(() => {
+    if (initialBadges && initialBadges.length > 0) {
+      setQueue(prev => [...prev, ...initialBadges])
+    }
+  }, [initialBadges])
+
+  // Realtime subscription
   useEffect(() => {
     const supabase = createClient()
     const channel = supabase
@@ -75,6 +84,7 @@ export default function BadgeToast({ userId }: Props) {
     return () => { supabase.removeChannel(channel) }
   }, [userId])
 
+  // Drain queue one at a time
   useEffect(() => {
     if (queue.length > 0 && !visible) {
       const next = queue[0]

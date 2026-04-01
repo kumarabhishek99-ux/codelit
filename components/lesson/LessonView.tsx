@@ -32,6 +32,7 @@ export default function LessonView({
     initialProgress?.status === 'completed' ? 'complete' : 'read'
   )
   const [completing, setCompleting] = useState(false)
+  const [newlyEarnedBadges, setNewlyEarnedBadges] = useState<any[]>([])
 
   const lessonIndex = allLessons.findIndex((l: any) => l.id === lesson.id)
   const totalLessons = allLessons.length
@@ -78,6 +79,21 @@ export default function LessonView({
 
     setCompleting(false)
     setPhase('complete')
+
+    // Poll for new badges (fallback for Realtime)
+    setTimeout(async () => {
+      const supabase = createClient()
+      const { data: newBadges } = await supabase
+        .from('user_badges')
+        .select('badge_id, earned_at, badge_definitions(*)')
+        .eq('user_id', userId)
+        .gte('earned_at', new Date(Date.now() - 5000).toISOString())
+        .order('earned_at', { ascending: false })
+
+      if (newBadges && newBadges.length > 0) {
+        setNewlyEarnedBadges(newBadges.map((b: any) => b.badge_definitions))
+      }
+    }, 2000)
   }
 
   const currentPhaseIndex = phaseIndex[phase]
@@ -166,7 +182,7 @@ export default function LessonView({
         )}
 
       </div>
-      <BadgeToast userId={userId} />
+      <BadgeToast userId={userId} initialBadges={newlyEarnedBadges} />
     </div>
   )
 }
