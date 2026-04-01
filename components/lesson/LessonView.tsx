@@ -8,6 +8,7 @@ import LessonRead from './LessonRead'
 import LessonTryIt from './LessonTryIt'
 import LessonQuiz from './LessonQuiz'
 import LessonComplete from './LessonComplete'
+import BadgeToast from '@/components/ui/BadgeToast'
 
 interface Props {
   module: any
@@ -165,6 +166,7 @@ export default function LessonView({
         )}
 
       </div>
+      <BadgeToast userId={userId} />
     </div>
   )
 }
