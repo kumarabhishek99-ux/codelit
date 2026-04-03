@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/DS'
 
 type Persona = 'designer' | 'pm_founder' | 'general'
 
@@ -10,17 +11,20 @@ const personas = {
   designer: {
     label: 'Designer track',
     desc: 'Design-first analogies, Figma-to-code bridges, frontend focus',
-    color: 'purple',
+    resultBg: '#EFF6FF',
+    resultLabel: '#1D4ED8',
   },
   pm_founder: {
     label: 'PM / Founder track',
     desc: 'Full-stack overview, shipping focus, team collaboration',
-    color: 'teal',
+    resultBg: '#F0FDF4',
+    resultLabel: '#15803D',
   },
   general: {
     label: 'General track',
     desc: 'No persona — covers everything equally',
-    color: 'amber',
+    resultBg: '#FFF7ED',
+    resultLabel: '#92400E',
   },
 }
 
@@ -44,7 +48,7 @@ const q3Options = [
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState(0) // 0=welcome, 1=q1, 2=q2, 3=q3, 4=result, 5=done
+  const [step, setStep] = useState(0)
   const [q1, setQ1] = useState('')
   const [q2, setQ2] = useState<Persona | ''>('')
   const [q3, setQ3] = useState('')
@@ -56,13 +60,8 @@ export default function OnboardingPage() {
     setStep(4)
   }
 
-  const handleQ2Select = (val: string) => {
-    setQ2(val as Persona)
-  }
-
   const showResult = () => {
-    const persona = (q2 || 'general') as Persona
-    setSelectedTrack(persona)
+    setSelectedTrack((q2 || 'general') as Persona)
     setStep(4)
   }
 
@@ -74,10 +73,7 @@ export default function OnboardingPage() {
 
     await supabase
       .from('profiles')
-      .update({
-        persona: selectedTrack,
-        onboarding_complete: true,
-      })
+      .update({ persona: selectedTrack, onboarding_complete: true })
       .eq('id', user.id)
 
     router.push('/dashboard')
@@ -85,9 +81,16 @@ export default function OnboardingPage() {
 
   const dots = [0, 1, 2, 3, 4]
 
+  const optionClass = (selected: boolean) =>
+    `text-left px-4 py-3 rounded-[16px] border-2 text-sm transition-all ${
+      selected
+        ? 'border-[#18181B] bg-[#F4F4F5]'
+        : 'border-[#E4E4E7] bg-white hover:border-[#18181B] hover:bg-[#F4F4F5]'
+    }`
+
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
-      <div className="w-full max-w-lg bg-white rounded-2xl border border-gray-100 p-8">
+    <main className="min-h-screen flex items-center justify-center px-4 bg-[#F4F4F5]">
+      <div className="w-full max-w-lg bg-white rounded-[20px] border border-[#E4E4E7] p-8">
 
         {/* Progress dots */}
         {step < 5 && (
@@ -96,7 +99,7 @@ export default function OnboardingPage() {
               <div
                 key={d}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  d === step ? 'w-5 bg-gray-900' : d < step ? 'w-1.5 bg-green-400' : 'w-1.5 bg-gray-200'
+                  d === step ? 'w-5 bg-[#18181B]' : d < step ? 'w-1.5 bg-[#22C55E]' : 'w-1.5 bg-[#F4F4F5]'
                 }`}
               />
             ))}
@@ -106,23 +109,18 @@ export default function OnboardingPage() {
         {/* Step 0: Welcome */}
         {step === 0 && (
           <div className="text-center">
-            <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <span className="text-purple-700 text-2xl font-mono font-bold">{'{}'}</span>
+            <div className="w-16 h-16 bg-[#18181B] rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <span className="text-white text-2xl font-mono font-bold">{'{}'}</span>
             </div>
-            <h1 className="text-2xl font-medium text-gray-900 mb-3">Welcome to Codelit</h1>
-            <p className="text-gray-500 text-sm leading-relaxed mb-8">
+            <h1 className="text-2xl font-extrabold text-[#18181B] mb-3">Welcome to Codelit</h1>
+            <p className="text-[#52525B] text-sm leading-relaxed mb-8">
               You don't need to become a developer. You just need to stop feeling lost around code.
               Answer 3 quick questions and we'll set up your personal track.
             </p>
-            <button
-              onClick={() => setStep(1)}
-              className="w-full bg-gray-900 text-white text-sm font-medium py-3 rounded-xl hover:bg-gray-700 transition-colors"
-            >
-              Let's get started →
-            </button>
+            <Button size="lg" onClick={() => setStep(1)} className="w-full">Let's get started →</Button>
             <button
               onClick={skipToGeneral}
-              className="mt-3 w-full text-sm text-gray-400 hover:text-gray-600 py-2"
+              className="mt-3 w-full text-sm text-[#9B9A97] font-semibold underline underline-offset-2 hover:text-[#52525B] py-2"
             >
               Skip quiz — put me on the general track
             </button>
@@ -132,36 +130,22 @@ export default function OnboardingPage() {
         {/* Step 1: Q1 */}
         {step === 1 && (
           <div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Question 1 of 3</p>
-            <h2 className="text-lg font-medium text-gray-900 mb-1">When you see a block of code, what happens?</h2>
-            <p className="text-sm text-gray-500 mb-6">Be honest — this helps us set the right pace.</p>
+            <p className="text-[11px] font-bold text-[#9B9A97] tracking-[0.1em] uppercase mb-2">Question 1 of 3</p>
+            <h2 className="text-lg font-extrabold text-[#18181B] mb-1">When you see a block of code, what happens?</h2>
+            <p className="text-sm text-[#71717A] mb-6">Be honest — this helps us set the right pace.</p>
             <div className="flex flex-col gap-2 mb-6">
               {q1Options.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setQ1(opt.value)}
-                  className={`text-left px-4 py-3 rounded-xl border text-sm transition-all ${
-                    q1 === opt.value
-                      ? 'border-blue-400 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="font-medium text-gray-900">{opt.label}</div>
-                  <div className="text-gray-500 text-xs mt-0.5">{opt.desc}</div>
+                <button key={opt.value} onClick={() => setQ1(opt.value)} className={optionClass(q1 === opt.value)}>
+                  <div className="font-bold text-[#18181B]">{opt.label}</div>
+                  <div className="text-[#71717A] text-xs mt-0.5">{opt.desc}</div>
                 </button>
               ))}
             </div>
             <div className="flex items-center justify-between">
-              <button onClick={() => setStep(0)} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-              <button
-                onClick={() => setStep(2)}
-                disabled={!q1}
-                className="bg-gray-900 text-white text-sm font-medium px-5 py-2 rounded-full disabled:opacity-30 hover:bg-gray-700 transition-colors"
-              >
-                Next →
-              </button>
+              <button onClick={() => setStep(0)} className="text-sm text-[#9B9A97] font-semibold hover:text-[#52525B]">← Back</button>
+              <Button onClick={() => setStep(2)} disabled={!q1}>Next →</Button>
             </div>
-            <button onClick={skipToGeneral} className="mt-4 w-full text-xs text-gray-400 hover:text-gray-500">
+            <button onClick={skipToGeneral} className="mt-4 w-full text-xs text-[#9B9A97] font-semibold underline underline-offset-2 hover:text-[#52525B]">
               Skip — just use the general track
             </button>
           </div>
@@ -170,36 +154,22 @@ export default function OnboardingPage() {
         {/* Step 2: Q2 */}
         {step === 2 && (
           <div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Question 2 of 3</p>
-            <h2 className="text-lg font-medium text-gray-900 mb-1">What best describes your work?</h2>
-            <p className="text-sm text-gray-500 mb-6">We'll tailor examples to make sense for you.</p>
+            <p className="text-[11px] font-bold text-[#9B9A97] tracking-[0.1em] uppercase mb-2">Question 2 of 3</p>
+            <h2 className="text-lg font-extrabold text-[#18181B] mb-1">What best describes your work?</h2>
+            <p className="text-sm text-[#71717A] mb-6">We'll tailor examples to make sense for you.</p>
             <div className="flex flex-col gap-2 mb-6">
               {q2Options.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => handleQ2Select(opt.value)}
-                  className={`text-left px-4 py-3 rounded-xl border text-sm transition-all ${
-                    q2 === opt.value
-                      ? 'border-blue-400 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="font-medium text-gray-900">{opt.label}</div>
-                  <div className="text-gray-500 text-xs mt-0.5">{opt.desc}</div>
+                <button key={opt.value} onClick={() => setQ2(opt.value as Persona)} className={optionClass(q2 === opt.value)}>
+                  <div className="font-bold text-[#18181B]">{opt.label}</div>
+                  <div className="text-[#71717A] text-xs mt-0.5">{opt.desc}</div>
                 </button>
               ))}
             </div>
             <div className="flex items-center justify-between">
-              <button onClick={() => setStep(1)} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-              <button
-                onClick={() => setStep(3)}
-                disabled={!q2}
-                className="bg-gray-900 text-white text-sm font-medium px-5 py-2 rounded-full disabled:opacity-30 hover:bg-gray-700 transition-colors"
-              >
-                Next →
-              </button>
+              <button onClick={() => setStep(1)} className="text-sm text-[#9B9A97] font-semibold hover:text-[#52525B]">← Back</button>
+              <Button onClick={() => setStep(3)} disabled={!q2}>Next →</Button>
             </div>
-            <button onClick={skipToGeneral} className="mt-4 w-full text-xs text-gray-400 hover:text-gray-500">
+            <button onClick={skipToGeneral} className="mt-4 w-full text-xs text-[#9B9A97] font-semibold underline underline-offset-2 hover:text-[#52525B]">
               Skip — just use the general track
             </button>
           </div>
@@ -208,36 +178,22 @@ export default function OnboardingPage() {
         {/* Step 3: Q3 */}
         {step === 3 && (
           <div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Question 3 of 3</p>
-            <h2 className="text-lg font-medium text-gray-900 mb-1">What's the main thing you want to do?</h2>
-            <p className="text-sm text-gray-500 mb-6">Pick the one that feels most true right now.</p>
+            <p className="text-[11px] font-bold text-[#9B9A97] tracking-[0.1em] uppercase mb-2">Question 3 of 3</p>
+            <h2 className="text-lg font-extrabold text-[#18181B] mb-1">What's the main thing you want to do?</h2>
+            <p className="text-sm text-[#71717A] mb-6">Pick the one that feels most true right now.</p>
             <div className="flex flex-col gap-2 mb-6">
               {q3Options.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setQ3(opt.value)}
-                  className={`text-left px-4 py-3 rounded-xl border text-sm transition-all ${
-                    q3 === opt.value
-                      ? 'border-blue-400 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="font-medium text-gray-900">{opt.label}</div>
-                  <div className="text-gray-500 text-xs mt-0.5">{opt.desc}</div>
+                <button key={opt.value} onClick={() => setQ3(opt.value)} className={optionClass(q3 === opt.value)}>
+                  <div className="font-bold text-[#18181B]">{opt.label}</div>
+                  <div className="text-[#71717A] text-xs mt-0.5">{opt.desc}</div>
                 </button>
               ))}
             </div>
             <div className="flex items-center justify-between">
-              <button onClick={() => setStep(2)} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-              <button
-                onClick={showResult}
-                disabled={!q3}
-                className="bg-gray-900 text-white text-sm font-medium px-5 py-2 rounded-full disabled:opacity-30 hover:bg-gray-700 transition-colors"
-              >
-                See my track →
-              </button>
+              <button onClick={() => setStep(2)} className="text-sm text-[#9B9A97] font-semibold hover:text-[#52525B]">← Back</button>
+              <Button onClick={showResult} disabled={!q3}>See my track →</Button>
             </div>
-            <button onClick={skipToGeneral} className="mt-4 w-full text-xs text-gray-400 hover:text-gray-500">
+            <button onClick={skipToGeneral} className="mt-4 w-full text-xs text-[#9B9A97] font-semibold underline underline-offset-2 hover:text-[#52525B]">
               Skip — just use the general track
             </button>
           </div>
@@ -246,51 +202,40 @@ export default function OnboardingPage() {
         {/* Step 4: Result */}
         {step === 4 && (
           <div>
-            <div className="bg-purple-50 rounded-xl p-5 mb-5">
-              <p className="text-xs font-medium text-purple-600 uppercase tracking-wider mb-2">
+            <div
+              className="rounded-[20px] p-5 mb-5"
+              style={{ background: personas[selectedTrack].resultBg }}
+            >
+              <p
+                className="text-[11px] font-bold tracking-[0.1em] uppercase mb-2"
+                style={{ color: personas[selectedTrack].resultLabel }}
+              >
                 {q2 ? 'Recommended for you' : 'Your track'}
               </p>
-              <h2 className="text-lg font-medium text-gray-900 mb-1">
-                {personas[selectedTrack].label}
-              </h2>
-              <p className="text-sm text-gray-600">{personas[selectedTrack].desc}</p>
+              <h2 className="text-lg font-extrabold text-[#18181B] mb-1">{personas[selectedTrack].label}</h2>
+              <p className="text-sm text-[#52525B]">{personas[selectedTrack].desc}</p>
             </div>
 
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
-              Or pick a different track
-            </p>
+            <p className="text-[11px] font-bold text-[#9B9A97] tracking-[0.1em] uppercase mb-3">Or pick a different track</p>
             <div className="flex flex-col gap-2 mb-6">
               {(Object.entries(personas) as [Persona, typeof personas[Persona]][]).map(([key, p]) => (
-                <button
-                  key={key}
-                  onClick={() => setSelectedTrack(key)}
-                  className={`text-left px-4 py-3 rounded-xl border text-sm transition-all ${
-                    selectedTrack === key
-                      ? 'border-blue-400 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="font-medium text-gray-900">{p.label}</div>
-                  <div className="text-gray-500 text-xs mt-0.5">{p.desc}</div>
+                <button key={key} onClick={() => setSelectedTrack(key)} className={optionClass(selectedTrack === key)}>
+                  <div className="font-bold text-[#18181B]">{p.label}</div>
+                  <div className="text-[#71717A] text-xs mt-0.5">{p.desc}</div>
                 </button>
               ))}
             </div>
 
             <div className="flex items-center justify-between">
-              <button onClick={() => setStep(q2 ? 3 : 0)} className="text-sm text-gray-400 hover:text-gray-600">
+              <button onClick={() => setStep(q2 ? 3 : 0)} className="text-sm text-[#9B9A97] font-semibold hover:text-[#52525B]">
                 ← Change answers
               </button>
-              <button
-                onClick={saveAndStart}
-                disabled={saving}
-                className="bg-gray-900 text-white text-sm font-medium px-5 py-2 rounded-full hover:bg-gray-700 transition-colors disabled:opacity-50"
-              >
+              <Button onClick={saveAndStart} disabled={saving}>
                 {saving ? 'Saving...' : 'Start learning →'}
-              </button>
+              </Button>
             </div>
           </div>
         )}
-
       </div>
     </main>
   )

@@ -1,8 +1,12 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Nunito } from 'next/font/google'
 import './globals.css'
 
-const geist = Geist({ subsets: ['latin'] })
+const nunito = Nunito({
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '800'],
+  variable: '--font-nunito',
+})
 
 export const metadata: Metadata = {
   title: 'Codelit — Code literacy for non-coders',
@@ -14,14 +18,10 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={geist.className}>
+    <html lang="en" className={nunito.variable}>
+      <body className={`${nunito.className} bg-white text-[#18181B]`}>
         {children}
       </body>
     </html>

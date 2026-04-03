@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/DS'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -32,34 +33,34 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
+    <main className="min-h-screen flex items-center justify-center px-4 bg-[#F4F4F5]">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
-              <span className="text-purple-700 text-xs font-mono font-bold">{'{}'}</span>
+            <div className="w-7 h-7 bg-[#18181B] rounded-lg flex items-center justify-center">
+              <span className="text-white text-xs font-mono font-bold">{'{}'}</span>
             </div>
-            <span className="font-medium text-gray-900">Codelit</span>
+            <span className="font-bold text-[#18181B]">Codelit</span>
           </Link>
-          <h1 className="text-2xl font-medium text-gray-900 mb-2">Welcome back</h1>
-          <p className="text-gray-500 text-sm">Enter your email to get a sign-in link</p>
+          <h1 className="text-2xl font-extrabold text-[#18181B] mb-2">Welcome back</h1>
+          <p className="text-[#71717A] text-sm font-semibold">Enter your email to get a sign-in link</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-8">
+        <div className="bg-white rounded-[20px] border border-[#E4E4E7] p-8">
           {sent ? (
             <div className="text-center">
-              <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-12 h-12 bg-[#F0FDF4] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-[#15803D]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p className="font-medium text-gray-900 mb-1">Check your email</p>
-              <p className="text-sm text-gray-500">We sent a magic link to <strong>{email}</strong></p>
+              <p className="font-bold text-[#18181B] mb-1">Check your email</p>
+              <p className="text-sm text-[#71717A] font-semibold">We sent a magic link to <strong className="text-[#18181B]">{email}</strong></p>
             </div>
           ) : (
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-bold text-[#18181B] mb-1.5">
                   Email address
                 </label>
                 <input
@@ -68,28 +69,24 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
+                  className="w-full px-4 py-3 rounded-[12px] border border-[#E4E4E7] text-[15px] focus:outline-none focus:border-[#18181B] text-[#18181B]"
                 />
               </div>
 
               {error && (
-                <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+                <p className="text-sm text-[#991B1B] bg-[#FEF2F2] px-3 py-2 rounded-xl font-semibold">{error}</p>
               )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gray-900 text-white text-sm font-medium py-2.5 rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-50"
-              >
+              <Button type="submit" size="lg" disabled={loading} className="w-full">
                 {loading ? 'Sending...' : 'Send magic link →'}
-              </button>
+              </Button>
             </form>
           )}
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-[#71717A] font-semibold mt-6">
           No account?{' '}
-          <Link href="/signup" className="text-purple-600 hover:text-purple-800 font-medium">
+          <Link href="/signup" className="text-[#18181B] font-bold underline underline-offset-2 hover:opacity-70">
             Sign up free
           </Link>
         </p>

@@ -1,5 +1,6 @@
 'use client'
 
+import { Button, Callout } from '@/components/ui/DS'
 import { lessonContent, fallbackContent } from '@/lib/lessonContent'
 
 interface Props {
@@ -8,57 +9,90 @@ interface Props {
   onNext: () => void
 }
 
+function formatInline(html: string) {
+  return html
+    .replace(/<strong>(.*?)<\/strong>/g, '<strong class="font-bold text-[#18181B]">$1</strong>')
+    .replace(/<code>(.*?)<\/code>/g, '<code class="bg-[#F4F4F5] text-[#18181B] px-1.5 py-0.5 rounded-md font-mono text-[12.5px] font-semibold">$1</code>')
+}
+
+function renderBody(html: string) {
+  const chunks = html.split('\n\n').filter(Boolean)
+
+  return chunks.map((chunk, i) => {
+    if (chunk.trim().startsWith('- ')) {
+      const items = chunk.split('\n').filter(l => l.startsWith('- '))
+      return (
+        <ul key={i} className="my-5 space-y-2.5 list-none p-0">
+          {items.map((item, j) => (
+            <li key={j} className="flex items-baseline gap-3 text-[16px] text-[#52525B] leading-[1.6]">
+              <span className="text-[#D4D4D8] text-lg leading-none flex-shrink-0 mt-0.5">·</span>
+              <span dangerouslySetInnerHTML={{ __html: formatInline(item.replace(/^- /, '')) }} />
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    if (chunk.includes('\n') && chunk.trim().startsWith('<code>')) {
+      const code = chunk.replace(/<\/?code>/g, '')
+      return (
+        <div key={i} className="my-5">
+          <div className="bg-[#18181B] rounded-[16px] px-5 py-4 font-mono text-[13px] leading-[1.9] text-[#D4D4D4] overflow-x-auto">
+            {code.split('\n').map((line, j) => (
+              <div key={j}>{line || '\u00A0'}</div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <p
+        key={i}
+        className="text-[16px] text-[#52525B] leading-[1.6] mb-5"
+        dangerouslySetInnerHTML={{ __html: formatInline(chunk) }}
+      />
+    )
+  })
+}
+
 export default function LessonRead({ lesson, module: mod, onNext }: Props) {
   const content = lessonContent[lesson.slug] ?? fallbackContent
 
   return (
-    <div>
-      {/* Tag */}
-      <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full border border-blue-100 mb-4">
-        <span>●</span> {lesson.est_minutes} min read
+    <div className="max-w-[600px]">
+
+      {/* Meta */}
+      <div className="flex items-center gap-2 mb-8">
+        <span className="text-[11px] font-bold text-[#9B9A97] tracking-[0.1em] uppercase">
+          {mod.title}
+        </span>
+        <span className="text-[#D4D4D8]">·</span>
+        <span className="text-[11px] font-bold text-[#9B9A97] tracking-[0.1em] uppercase">
+          {lesson.est_minutes} min read
+        </span>
       </div>
 
-      <h1 className="text-2xl font-medium text-gray-900 mb-3 leading-snug">{lesson.title}</h1>
+      {/* Title */}
+      <h1 className="text-[30px] font-extrabold tracking-tight text-[#18181B] leading-[1.15] mb-10">
+        {lesson.title}
+      </h1>
 
       {/* Body */}
-      <div
-        className="text-[15px] text-gray-600 leading-relaxed mb-6"
-        dangerouslySetInnerHTML={{
-          __html: content.body
-            .replace(/<strong>/g, '<strong class="font-medium text-gray-900">')
-            .replace(/<code>/g, '<code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono text-gray-800">')
-        }}
-      />
-
-      {/* Analogy card */}
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
-        <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Think of it like this</div>
-        <p className="text-sm text-gray-700 leading-relaxed">{content.analogy}</p>
+      <div className="mb-10">
+        {renderBody(content.body)}
       </div>
 
-      {/* Key concept */}
-      <div className="border-l-2 border-blue-400 pl-4 mb-6 bg-blue-50 py-3 pr-4 rounded-r-xl">
-        <div className="text-xs font-medium text-blue-600 mb-1">Key concept</div>
-        <p className="text-sm text-gray-800 leading-relaxed">{content.keyConcept}</p>
-      </div>
-
-      {/* Vibe coding bridge */}
-      <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-8">
-        <div className="text-xs font-medium text-green-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-          <span>★</span> Why this matters for vibe coding
-        </div>
-        <p className="text-sm text-green-800 leading-relaxed">{content.vibeBridge}</p>
+      {/* Callout cards */}
+      <div className="space-y-3 mb-10">
+        <Callout type="analogy">{content.analogy}</Callout>
+        <Callout type="concept">{content.keyConcept}</Callout>
+        <Callout type="vibe">{content.vibeBridge}</Callout>
       </div>
 
       {/* Nav */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <div />
-        <button
-          onClick={onNext}
-          className="bg-gray-900 text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-gray-700 transition-colors"
-        >
-          Try it →
-        </button>
+      <div className="flex justify-end pt-6 border-t border-[#F4F4F5]">
+        <Button size="lg" onClick={onNext}>Try it →</Button>
       </div>
     </div>
   )

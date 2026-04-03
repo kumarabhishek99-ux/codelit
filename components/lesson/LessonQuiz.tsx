@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { quizContent } from '@/lib/quizContent'
-import type { QuizQuestion } from '@/lib/quizContent'
+import { Button } from '@/components/ui/DS'
 
 interface Props {
   lesson: any
@@ -57,14 +57,14 @@ export default function LessonQuiz({ lesson, userId, isRevision, onBack, onCompl
   return (
     <div>
       {/* Tag */}
-      <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 text-xs font-medium px-3 py-1.5 rounded-full border border-amber-100 mb-4">
+      <div className="inline-flex items-center gap-1.5 bg-[#FFF7ED] text-[#92400E] text-xs font-bold px-3 py-1.5 rounded-full border border-[#FDE68A] mb-4">
         <span>★</span> {isRevision ? 'Practice quiz' : `Quick quiz · ${questions.length} questions`}
       </div>
 
-      <h2 className="text-xl font-medium text-gray-900 mb-2">
+      <h2 className="text-[22px] font-extrabold text-[#18181B] mb-2">
         {isRevision ? 'Practice quiz' : 'Check your understanding'}
       </h2>
-      <p className="text-sm text-gray-500 mb-8">
+      <p className="text-sm text-[#71717A] font-semibold mb-8">
         {isRevision
           ? 'This is just for practice — no badges will change.'
           : 'Get all questions right to complete this lesson.'}
@@ -82,10 +82,10 @@ export default function LessonQuiz({ lesson, userId, isRevision, onBack, onCompl
               key={q.id}
               className={`transition-opacity duration-300 ${unlocked ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}
             >
-              <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+              <div className="text-[11px] font-bold text-[#9B9A97] tracking-[0.1em] uppercase mb-2">
                 Question {i + 1} of {questions.length}
               </div>
-              <p className="text-base font-medium text-gray-900 mb-4 leading-snug">{q.text}</p>
+              <p className="text-[17px] font-bold text-[#18181B] mb-4 leading-snug">{q.text}</p>
 
               <div className="flex flex-col gap-2">
                 {q.options.map((opt) => {
@@ -99,14 +99,14 @@ export default function LessonQuiz({ lesson, userId, isRevision, onBack, onCompl
                       key={opt.value}
                       onClick={() => handleAnswer(q.id, opt.value, q.correct)}
                       disabled={!!revealed[q.id]}
-                      className={`text-left px-4 py-3 rounded-xl border text-sm transition-all ${
+                      className={`text-left px-4 py-3 rounded-[16px] border-2 text-[15px] transition-all ${
                         showCorrect
-                          ? 'border-green-400 bg-green-50 text-green-800'
+                          ? 'border-[#22C55E] bg-[#F0FDF4] text-[#15803D]'
                           : showWrong
-                          ? 'border-red-300 bg-red-50 text-red-800'
+                          ? 'border-[#EF4444] bg-[#FEF2F2] text-[#991B1B]'
                           : isSelected
-                          ? 'border-blue-300 bg-blue-50 text-blue-800'
-                          : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
+                          ? 'border-[#18181B] bg-[#F4F4F5] text-[#18181B]'
+                          : 'border-[#E4E4E7] bg-white hover:border-[#18181B] hover:bg-[#F4F4F5] text-[#52525B]'
                       } disabled:cursor-default`}
                     >
                       {opt.label}
@@ -116,12 +116,12 @@ export default function LessonQuiz({ lesson, userId, isRevision, onBack, onCompl
               </div>
 
               {isCorrect && revealed[q.id] && (
-                <div className="mt-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-800">
+                <div className="mt-3 bg-[#F0FDF4] text-[#15803D] rounded-[12px] p-3 text-sm font-semibold">
                   {q.feedbackOnCorrect}
                 </div>
               )}
               {isWrong && (
-                <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                <div className="mt-3 bg-[#FEF2F2] text-[#991B1B] rounded-[12px] p-3 text-sm font-semibold">
                   Not quite — {q.hintOnWrong}
                 </div>
               )}
@@ -130,15 +130,11 @@ export default function LessonQuiz({ lesson, userId, isRevision, onBack, onCompl
         })}
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <button onClick={onBack} className="text-sm text-gray-400 hover:text-gray-600">← Try it again</button>
-        <button
-          onClick={handleSubmit}
-          disabled={!allCorrect || completing}
-          className="bg-gray-900 text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-gray-700 transition-colors disabled:opacity-30"
-        >
+      <div className="flex items-center justify-between pt-4 border-t border-[#F4F4F5]">
+        <button onClick={onBack} className="text-sm text-[#9B9A97] font-semibold hover:text-[#52525B]">← Try it again</button>
+        <Button onClick={handleSubmit} disabled={!allCorrect || completing}>
           {completing ? 'Saving...' : isRevision ? 'Finish revision →' : 'Complete lesson →'}
-        </button>
+        </Button>
       </div>
     </div>
   )
