@@ -6,7 +6,7 @@ export interface LessonContent {
 }
 
 export interface TryItContent {
-  type: 'terminal' | 'variable_editor' | 'logic_flow' | 'commit_timeline' | 'branch_visual'
+  type: 'terminal' | 'variable_editor' | 'logic_flow' | 'commit_timeline' | 'branch_visual' | 'reflection'
   description: string
   commands?: Array<{ cmd: string; label: string; output: string; explain: string }>
   variables?: Array<{ name: string; value: string; type: string; description: string }>
@@ -16,6 +16,7 @@ export interface TryItContent {
   falseResult?: string
   commits?: Array<{ id: string; message: string; time: string }>
   branches?: Array<{ name: string; commits: string[]; isCurrent: boolean }>
+  prompts?: Array<{ question: string; hint: string }>
 }
 
 export const fallbackContent: LessonContent = {
@@ -410,6 +411,58 @@ This cycle repeats for every feature. Understanding it means you're not just wat
 }
 
 export const tryItContent: Record<string, TryItContent> = {
+
+  // ─── MODULE 0 ───────────────────────────────────────────
+
+  'big-picture': {
+    type: 'reflection',
+    description: 'Before moving to the quiz, think through these questions.',
+    prompts: [
+      { question: 'Think of an app you use every day. Can you identify the frontend, backend, and database? What does each layer do in that specific app?', hint: 'Frontend = the screens you see. Backend = the logic behind your actions. Database = where your account, history, or content is stored.' },
+      { question: 'When you last asked a developer to build a feature, which layer were they probably working on — and did you know that at the time?', hint: 'Most features touch all three layers, but one usually drives the work. A new button is frontend. A pricing rule is backend. Storing preferences is database.' },
+    ],
+  },
+
+  'frontend-backend': {
+    type: 'reflection',
+    description: 'Before moving to the quiz, think through these questions.',
+    prompts: [
+      { question: 'Open any website and right-click → "Inspect". The panel that appears IS the frontend code. Does seeing it change how you think about what you\'re looking at?', hint: 'Everything in that panel is HTML and CSS — the exact instructions the browser follows to draw what you see. The backend is invisible from here.' },
+      { question: 'If a user changes their profile photo, which layers need to be involved? Walk through what happens step by step.', hint: 'Frontend shows the upload button → backend receives the file → database stores the URL → backend responds → frontend updates the displayed photo.' },
+    ],
+  },
+
+  'how-ai-fits': {
+    type: 'reflection',
+    description: 'Before moving to the quiz, think through these questions.',
+    prompts: [
+      { question: 'Think of the last time you used an AI coding tool. Which part of the stack was it helping you build — frontend, backend, or database? Were you aware of the difference at the time?', hint: 'Most people don\'t think in those terms when prompting. But specifying the layer makes your prompts dramatically more precise.' },
+      { question: 'What\'s one thing you\'ve wanted to build that felt too technical? Now that you understand the three-layer model, does breaking it into layers make it feel more approachable?', hint: 'You don\'t need to build all three layers at once. AI tools can handle one layer at a time, and the layers connect predictably.' },
+    ],
+  },
+
+  // ─── MODULE 1 ───────────────────────────────────────────
+
+  'your-computers-brain': {
+    type: 'reflection',
+    description: 'Before moving to the quiz, think through these questions.',
+    prompts: [
+      { question: 'Your computer is running many programs right now. Each one is using CPU and RAM. Open your system\'s Activity Monitor or Task Manager — what do you see taking the most resources?', hint: 'Browsers are notorious RAM users. Each tab is essentially its own program. This is why too many tabs slow things down.' },
+      { question: 'When a developer says "this is a memory leak", what do you think they mean now that you understand RAM?', hint: 'A program keeps taking RAM but never gives it back — like filling a bathtub with no drain. Eventually the system runs out and crashes or slows to a crawl.' },
+    ],
+  },
+
+  'files-and-folders': {
+    type: 'terminal',
+    description: 'Navigate the file system with these commands. This is exactly what developers do when setting up a project.',
+    commands: [
+      { cmd: 'ls', label: 'list files', output: 'Desktop   Documents   Downloads   my-project   notes.txt', explain: '<strong>ls</strong> = "list". Shows every file and folder in your current location. The starting point before any file operation.' },
+      { cmd: 'ls -la', label: 'list with details', output: 'drwxr-xr-x  my-project\n-rw-r--r--  notes.txt\n-rw-r--r--  config.json', explain: '<strong>ls -la</strong> adds flags: <code>-l</code> for long format (shows permissions, size, date) and <code>-a</code> for all files including hidden ones starting with a dot.' },
+      { cmd: 'mkdir my-project', label: 'create a folder', output: '', explain: '<strong>mkdir</strong> = "make directory". Creates a new folder. No output = success. This is how every project starts — a blank folder with a name.' },
+      { cmd: 'touch README.md', label: 'create a file', output: '', explain: '<strong>touch</strong> creates an empty file. <code>README.md</code> is the standard first file in any project — it describes what the project does.' },
+    ],
+  },
+
   'the-terminal': {
     type: 'terminal',
     description: 'Click any command to run it in the sandbox. Nothing can break — this is a safe simulation.',
@@ -420,6 +473,40 @@ export const tryItContent: Record<string, TryItContent> = {
       { cmd: 'mkdir my-project', label: 'create a folder', output: '', explain: '<strong>mkdir</strong> = "make directory". Creates a new empty folder. No output = success. Run ls now and you\'ll see it appear.' },
     ],
   },
+
+  'file-paths': {
+    type: 'terminal',
+    description: 'Explore how file paths work. Every path is an address — an exact location in your file system.',
+    commands: [
+      { cmd: 'pwd', label: 'print current path', output: '/Users/you/Documents/my-project', explain: '<strong>pwd</strong> shows your full absolute path — the complete address from the root of your drive. Every file has exactly one absolute path.' },
+      { cmd: 'cd ..', label: 'go up one level', output: '', explain: '<strong>cd ..</strong> moves you one folder up. The <code>..</code> always means "parent folder". So from <code>/Users/you/Documents</code> you\'d land in <code>/Users/you</code>.' },
+      { cmd: 'cd ~/Desktop', label: 'go to Desktop', output: '', explain: '<strong>~</strong> is a shortcut for your home folder. <code>~/Desktop</code> means "Desktop inside my home folder". This works from anywhere — it\'s an absolute path.' },
+      { cmd: 'ls ./src', label: 'list a relative path', output: 'index.js   styles.css   components/', explain: '<strong>./src</strong> means "the src folder inside my current location". The <code>./</code> means "starting from here". This is a relative path — it depends on where you currently are.' },
+    ],
+  },
+
+  'first-command': {
+    type: 'terminal',
+    description: 'Run real developer commands. These are things you\'d actually type when working with an AI coding tool.',
+    commands: [
+      { cmd: 'npm install', label: 'install dependencies', output: 'added 847 packages in 12s', explain: '<strong>npm install</strong> downloads all the packages your project needs. Think of it as "install all the ingredients this recipe requires". You run this once when starting a project.' },
+      { cmd: 'npm run dev', label: 'start dev server', output: '▲ Next.js 14.0\n- Local:  http://localhost:3000', explain: '<strong>npm run dev</strong> starts your project locally so you can see it in a browser. The <code>localhost:3000</code> address only works on your machine — it\'s not public yet.' },
+      { cmd: 'git status', label: 'check what changed', output: 'On branch main\nModified: app/page.tsx\nUntracked: components/Button.tsx', explain: '<strong>git status</strong> shows which files have changed since your last save point. This is the first thing developers run before saving their work.' },
+      { cmd: 'git add .', label: 'stage all changes', output: '', explain: '<strong>git add .</strong> stages all changed files for saving. The <code>.</code> means "everything". Think of it as selecting all your changes before hitting save.' },
+    ],
+  },
+
+  // ─── MODULE 2 ───────────────────────────────────────────
+
+  'what-is-code': {
+    type: 'reflection',
+    description: 'Before moving to the quiz, think through these questions.',
+    prompts: [
+      { question: 'Look at any app on your phone. Can you guess which part is frontend and which is backend? Where do you think the data lives?', hint: 'Frontend = what you see and touch. Backend = what processes your actions. Data lives in a database, usually on a server somewhere else entirely.' },
+      { question: 'Think of a feature you\'ve asked a developer to build. Which of the three building blocks — variables, functions, or logic — do you think it needed most?', hint: 'Most features need all three, but one usually dominates. A pricing rule needs logic. A "welcome, {name}" message needs variables. A "send email on signup" action is a function.' },
+    ],
+  },
+
   'variables': {
     type: 'variable_editor',
     description: 'Edit the value of each variable and see how it would appear in the app. This is exactly how variables work in real code.',
@@ -430,6 +517,7 @@ export const tryItContent: Record<string, TryItContent> = {
       { name: 'currentModule', value: 'Reading code', type: 'string', description: 'The module the user is currently in' },
     ],
   },
+
   'functions': {
     type: 'terminal',
     description: 'Read each function name and predict what it does before revealing the answer.',
@@ -440,6 +528,7 @@ export const tryItContent: Record<string, TryItContent> = {
       { cmd: 'getUserById(id)', label: 'what does this do?', output: 'Looks up and returns the user with that specific ID from the database', explain: '<strong>getUserById</strong> — fetches a specific user from the database using their ID. Get + what you\'re getting + how you\'re getting it. A very common naming pattern.' },
     ],
   },
+
   'logic': {
     type: 'logic_flow',
     description: 'Change the condition and see which path the code takes. This is exactly how if/else works.',
@@ -448,6 +537,36 @@ export const tryItContent: Record<string, TryItContent> = {
     trueResult: 'Show the checkout button and order summary',
     falseResult: 'Show "Your cart is empty" and a Continue Shopping link',
   },
+
+  'reading-a-real-file': {
+    type: 'reflection',
+    description: 'Before moving to the quiz, think through these questions.',
+    prompts: [
+      { question: 'When an AI tool shows you code it generated, do you usually read it — or just copy and paste it? What would change if you understood even 30% of what you were looking at?', hint: 'Reading code isn\'t about understanding every line. It\'s about spotting patterns: function names, variable names, conditionals. These tell you the story of what the code does.' },
+      { question: 'Look at a file in your current project (if you have one). Can you find one function name and guess what it does from the name alone?', hint: 'Good function names read almost like plain English. sendEmail(), validateForm(), getCurrentUser() — you know exactly what they do before reading a single line inside.' },
+    ],
+  },
+
+  'languages-map': {
+    type: 'reflection',
+    description: 'Before moving to the quiz, think through these questions.',
+    prompts: [
+      { question: 'When you ask an AI coding tool to "add a button", do you know what language it will use? Does knowing it\'s HTML+CSS for the button and JavaScript for the click behaviour change how you\'d describe the task?', hint: 'Saying "add a styled button that submits the form" is more precise than "add a button". Knowing the layers (HTML = structure, CSS = style, JS = behaviour) helps you describe intent clearly.' },
+      { question: 'A startup is building a mobile app and a web app. The AI tool suggests using React Native for mobile and React for web. Why might sharing a language family matter here?', hint: 'Same language family means the same developers can work on both. Variables, functions, and logic work identically. Only the platform-specific parts differ.' },
+    ],
+  },
+
+  // ─── MODULE 3 ───────────────────────────────────────────
+
+  'why-version-control': {
+    type: 'reflection',
+    description: 'Before moving to the quiz, think through these questions.',
+    prompts: [
+      { question: 'Have you ever made changes to a document or design file and wished you could go back to an earlier version? How did you handle it — did it work?', hint: 'Common solutions: duplicate files, "v2_FINAL_really_final.docx", or just hoping you remember. Version control is the systematic answer to this exact problem.' },
+      { question: 'If a developer tells you "I\'ll revert that change", what do you now understand they\'re doing — and why is that possible without losing other work?', hint: 'Every commit is a snapshot. Reverting means going back to a specific snapshot. Because each save is independent, you can undo one change without losing the ten that came after it.' },
+    ],
+  },
+
   'commits': {
     type: 'commit_timeline',
     description: 'This is a real commit history from a small project. Read the messages — they tell the story of how it was built.',
@@ -459,6 +578,7 @@ export const tryItContent: Record<string, TryItContent> = {
       { id: '3e8f012', message: 'Initial project setup', time: '1 week ago' },
     ],
   },
+
   'branches': {
     type: 'branch_visual',
     description: "This shows a real project's branches. Main is the stable version. Each other branch is work in progress.",
@@ -466,6 +586,24 @@ export const tryItContent: Record<string, TryItContent> = {
       { name: 'main', commits: ['Initial setup', 'Add homepage', 'Launch v1'], isCurrent: false },
       { name: 'feature/user-profiles', commits: ['Add profile page', 'Upload avatar'], isCurrent: true },
       { name: 'fix/checkout-bug', commits: ['Debug payment flow'], isCurrent: false },
+    ],
+  },
+
+  'github': {
+    type: 'reflection',
+    description: 'Before moving to the quiz, think through these questions.',
+    prompts: [
+      { question: 'If a developer says "the code is on GitHub, you can see the PR", what do you now understand they\'re offering you — and what could you actually look at?', hint: 'A PR (Pull Request) is a proposed set of changes with a description, discussion thread, and diff showing exactly what changed. You can read the description and comments without understanding the code.' },
+      { question: 'GitHub shows you when code was last changed, who changed it, and what the commit message said. How could that information be useful in a non-technical role?', hint: 'You can see if a bug fix was actually shipped. You can see how active a project is. You can read the conversation about why a decision was made — without reading a line of code.' },
+    ],
+  },
+
+  'ai-tools-and-git': {
+    type: 'reflection',
+    description: 'Before moving to the quiz, think through these questions.',
+    prompts: [
+      { question: 'When an AI coding tool makes changes to your project, do you commit them immediately or make more changes first? After this lesson, what approach would you take and why?', hint: 'Small, focused commits are easier to understand and reverse. If the AI makes 5 changes and one breaks something, a single commit means reverting all 5. Separate commits let you undo just the one.' },
+      { question: 'A teammate says "the AI just rewrote half the codebase and now nothing works — I can\'t figure out what changed." What Git workflow could have prevented this?', hint: 'Committing before letting the AI make changes gives you a clean rollback point. Working on a branch means main stays untouched. These are habits, not just concepts.' },
     ],
   },
 }
