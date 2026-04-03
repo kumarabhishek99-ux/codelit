@@ -31,7 +31,6 @@ export default function LessonView({
   const router = useRouter()
   const isRevision = initialProgress?.status === 'completed'
   const [phase, setPhase] = useState<'read' | 'tryit' | 'quiz' | 'complete' | 'revision_complete'>('read')
-  const [completing, setCompleting] = useState(false)
   const [newlyEarnedBadges, setNewlyEarnedBadges] = useState<any[]>([])
 
   const lessonIndex = allLessons.findIndex((l: any) => l.id === lesson.id)
@@ -59,17 +58,24 @@ export default function LessonView({
     }
   }, [])
 
-  const handleComplete = async (scorePct = 100) => {
-    setCompleting(true)
+  const handleComplete = (scorePct = 100) => {
+    // Advance UI immediately — no waiting for DB
+    if (isRevision) {
+      setPhase('revision_complete')
+    } else {
+      setPhase('complete')
+    }
+    saveProgressInBackground(scorePct)
+  }
+
+  const saveProgressInBackground = async (scorePct: number) => {
     const supabase = createClient()
 
     if (isRevision) {
-      // Increment revision_count on progress row
       await supabase.from('user_progress').update({
         revision_count: (initialProgress?.revision_count ?? 0) + 1,
       }).eq('user_id', userId).eq('lesson_id', lesson.id)
 
-      // Increment revision_count on profile and check badge thresholds
       const { data: profile } = await supabase
         .from('profiles').select('revision_count').eq('id', userId).single()
       const newCount = (profile?.revision_count ?? 0) + 1
@@ -87,53 +93,30 @@ export default function LessonView({
             .upsert({ user_id: userId, badge_id: badge.id }, { onConflict: 'user_id,badge_id' })
         }
       }
+    } else {
+      await supabase.from('user_progress').upsert({
+        user_id: userId,
+        lesson_id: lesson.id,
+        status: 'completed',
+        score_pct: scorePct,
+        completed_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,lesson_id' })
 
-      // Poll for newly awarded badges
-      setTimeout(async () => {
-        const { data: newBadges } = await supabase
-          .from('user_badges')
-          .select('badge_id, earned_at, badge_definitions(*)')
-          .eq('user_id', userId)
-          .gte('earned_at', new Date(Date.now() - 5000).toISOString())
-          .order('earned_at', { ascending: false })
-        if (newBadges && newBadges.length > 0) {
-          setNewlyEarnedBadges(newBadges.map((b: any) => b.badge_definitions))
-        }
-      }, 1000)
-
-      setCompleting(false)
-      setPhase('revision_complete')
-      return
+      await supabase.from('profiles')
+        .update({ last_active_date: new Date().toISOString().split('T')[0] })
+        .eq('id', userId)
     }
 
-    // First-time completion
-    await supabase.from('user_progress').upsert({
-      user_id: userId,
-      lesson_id: lesson.id,
-      status: 'completed',
-      score_pct: scorePct,
-      completed_at: new Date().toISOString(),
-    }, { onConflict: 'user_id,lesson_id' })
-
-    await supabase.from('profiles')
-      .update({ last_active_date: new Date().toISOString().split('T')[0] })
-      .eq('id', userId)
-
-    setCompleting(false)
-    setPhase('complete')
-
-    // Poll for badges (fallback for Realtime)
-    setTimeout(async () => {
-      const { data: newBadges } = await supabase
-        .from('user_badges')
-        .select('badge_id, earned_at, badge_definitions(*)')
-        .eq('user_id', userId)
-        .gte('earned_at', new Date(Date.now() - 5000).toISOString())
-        .order('earned_at', { ascending: false })
-      if (newBadges && newBadges.length > 0) {
-        setNewlyEarnedBadges(newBadges.map((b: any) => b.badge_definitions))
-      }
-    }, 2000)
+    // Poll for badges immediately after writes complete — no setTimeout
+    const { data: newBadges } = await supabase
+      .from('user_badges')
+      .select('badge_id, earned_at, badge_definitions(*)')
+      .eq('user_id', userId)
+      .gte('earned_at', new Date(Date.now() - 10000).toISOString())
+      .order('earned_at', { ascending: false })
+    if (newBadges && newBadges.length > 0) {
+      setNewlyEarnedBadges(newBadges.map((b: any) => b.badge_definitions))
+    }
   }
 
   const currentPhaseIndex = phaseIndex[phase]
@@ -205,7 +188,7 @@ export default function LessonView({
             isRevision={isRevision}
             onBack={() => setPhase('tryit')}
             onComplete={handleComplete}
-            completing={completing}
+            completing={false}
           />
         )}
 
